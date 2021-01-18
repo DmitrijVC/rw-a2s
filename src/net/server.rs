@@ -16,25 +16,30 @@ pub struct Server {
 } impl Server {
 
     // ToDo fix checking if the host is offline
-    pub fn new(ip: String, port: u16) -> Result<Self, ServerError> {
-        let socket = match UdpSocket::bind("0.0.0.0:0") {
-            Ok(result) => result,
-            Err(error) => return Err(ServerError::IoError(error)),
+    pub fn new(ip: String, port: u16, socket: Option<UdpSocket>) -> Result<Self, ServerError> {
+        let sock = if socket.is_some() {
+            socket.unwrap()
+        } else {
+            match UdpSocket::bind("0.0.0.0:0") {
+                Ok(result) => result,
+                Err(error) => return Err(ServerError::IoError(error)),
+            }
         };
 
+
         // ToDo check if Result returned Ok
-        let _ = socket.set_write_timeout(Some(
+        let _ = sock.set_write_timeout(Some(
             Duration::from_millis(1000)
         ));
 
-        let _ = socket.set_read_timeout(Some(
+        let _ = sock.set_read_timeout(Some(
             Duration::from_millis(1000)
         ));
 
         let mut server = Self {
             ip,
             port,
-            socket,
+            socket: sock,
         };
 
         return match server.connect() {

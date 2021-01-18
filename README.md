@@ -3,11 +3,9 @@ A2S lib for Rust-Wipe.com <br>
 Debug branch is for testing purposes only!
 
 ## Issues
-- ~~Regions different than ALL, are not working~~ *(it fixed itself?)*
-- ~~Port should be u16 not u32~~ *(fixed in v0.2.1-debug)*
-- ~~Info and MasterServers should be moved to client~~ *(fixed in v0.2.0-debug)*
+- Regions different from ALL, are not working for some apps
 
-## Example of v0.2.2-debug
+## Example of v0.3.0-debug
 Code:
 ```rust
 use rw_a2s::net::server::{Server, Info};
@@ -17,12 +15,12 @@ use rw_a2s::types::Bool;
 use rw_a2s::errors::ServerError;
 
 fn get_server_info(ip: String, port: u16) -> Result<Info, ServerError> {
-    let server = Server::new(ip, port)?;
+    let server = Server::new(ip, port, None)?;
     server.get_info()
 }
 
 fn main() {
-    let mut client = Client::new().unwrap();
+    let mut client = Client::new(None).unwrap();
     client.connect_to_master(MasterServers::Source.get_host()).unwrap();
 
     let mut filters = Filter::new(None);

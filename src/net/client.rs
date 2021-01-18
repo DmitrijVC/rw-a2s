@@ -29,17 +29,21 @@ pub enum MasterServers {
 }
 
 pub struct Client {
-    socket: UdpSocket,
+    pub socket: UdpSocket,
     connected: bool,
 } impl Client {
-    pub fn new() -> Result<Self, A2SClientError> {
-        let socket = match UdpSocket::bind("0.0.0.0:0") {
-            Ok(result) => result,
-            Err(error) => return Err(A2SClientError::IoError(error))
+    pub fn new(socket: Option<UdpSocket>) -> Result<Self, A2SClientError> {
+        let sock = if socket.is_some() {
+            socket.unwrap()
+        } else {
+            match UdpSocket::bind("0.0.0.0:0") {
+                Ok(result) => result,
+                Err(error) => return Err(A2SClientError::IoError(error))
+            }
         };
 
         Ok (Self {
-            socket,
+            socket: sock,
             connected: false,
         })
     }
