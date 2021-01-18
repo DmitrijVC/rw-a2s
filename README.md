@@ -5,30 +5,41 @@ Debug branch is for testing purposes only!
 ## Issues
 - Regions different from ALL, are not working for some apps
 
-## Example of v0.3.0-debug
+## Example of v0.4.0-debug
 Code:
 ```rust
-use rw_a2s::net::server::{Server, Info};
-use rw_a2s::net::client::{Client, MasterServers};
+#[macro_use] extern crate lazy_static;
+
+use rw_a2s::net::server::{ServerBS, Info};
+use rw_a2s::net::client::{ClientBS, MasterServers};
 use rw_a2s::net::client::filters::{Filter, FilterCode, Regions};
 use rw_a2s::types::Bool;
 use rw_a2s::errors::ServerError;
+use std::net::UdpSocket;
+use std::sync::Mutex;
+
+lazy_static!{
+    static ref SOCKET: UdpSocket = {
+        UdpSocket::bind("0.0.0.0:0").unwrap()
+    };
+}
+
 
 fn get_server_info(ip: String, port: u16) -> Result<Info, ServerError> {
-    let server = Server::new(ip, port, None)?;
-    server.get_info()
+    let server = ServerBS::new(ip, port, &SOCKET)?;
+    server.get_info(&SOCKET)
 }
 
 fn main() {
-    let mut client = Client::new(None).unwrap();
-    client.connect_to_master(MasterServers::Source.get_host()).unwrap();
+    let mut client = ClientBS::new();
+    client.connect_to_master(MasterServers::Source.get_host(), &SOCKET).unwrap();
 
     let mut filters = Filter::new(None);
     filters.add_unchecked(FilterCode::AppId, &252490_u32);
-    filters.add_unchecked(FilterCode::Secure, &Bool::TRUE);
+    filters.add_unchecked(FilterCode::Secure, &Bool::FALSE);
     filters.add_unchecked(FilterCode::Full, &Bool::TRUE);
 
-    client.get_servers(Regions::All, filters, |ip, port| {
+    client.get_servers(Regions::All, filters, &SOCKET, |ip, port| {
 
         let info = match get_server_info(ip.clone(), port) {
             Ok(result) => result,
@@ -45,31 +56,31 @@ fn main() {
 Output:
 ```
 [MASTER SERVER] received 1392 bytes
+-> [77.46.72.161:28015] ShataN Inside | rust.shatan.pl [PvE]
+-> [83.28.241.25:28015] <OFFLINE>
 -> [46.29.21.219:28030] esssa.maxcraft.pl
--> [83.23.110.80:28015] Vanilliowa Wies - map 3500
--> [77.79.52.70:28015] [EU] Rustiak | Small Map | 2x Resources |
--> [85.232.145.99:28015] Build server
--> [51.77.61.229:28752] Polski Rust dla giga koxow
--> [51.83.143.167:28245] WePlayRust
--> [51.77.57.19:28015] [RU] Facepunch 4
--> [51.38.148.45:25579] <OFFLINE>
--> [51.38.147.22:28015] [EU/PL] Zamotani PVE |07.01|Raid|4500|Decay 30%|Vanilla|
--> [51.38.134.175:28015] [EU-EAST] Szwajcaria Podlasia
--> [54.38.49.12:28015] [PL] Serwer na czilku :)
--> [137.74.4.84:28015] SideGaming
--> [54.36.175.96:25567] Shockbyte Rust Server
--> [51.38.148.45:25575] <OFFLINE>
--> [51.77.53.113:25566] WIZLA'S WASTELAND NEW IP 51.89.180.186:28015
--> [54.38.195.130:25598] <OFFLINE>
--> [51.38.148.38:25582] <OFFLINE>
--> [213.32.122.242:28759] Twoj serwer @LiveServer.pl
--> [188.165.22.92:28752] Vexus serwer @LiveServer.pl
--> [51.75.52.211:25582] <OFFLINE>
--> [51.83.247.169:28025] <OFFLINE>
 -> [137.74.32.104:2042] RustyOmega 2X Everything | Multiple Plugins | New Server | Come
--> [54.37.129.48:28015] [EU] CoolRust MAIN 2x | Fullwiped: 12.01 16:00 CET
--> [51.77.57.35:28015] <OFFLINE>
--> [54.36.175.67:25576] <OFFLINE>
--> [137.74.4.131:28225] Rice Hills [Modded | x2] | Last Wipe: 7 Jan 2021
+-> [51.38.148.38:25566] RP Server / No PVP unless it is Canon / Bans for non-rp players
+-> [137.74.32.104:131] <OFFLINE>
+-> [145.239.24.178:27240] [EU] Pumpkins Eaters
+-> [51.83.247.169:28025] <OFFLINE>
+-> [54.37.129.48:28017] [EU] Bestrust Solo/Duo/Trio 2x | Fullwiped: 17.01 12:00 CET
+-> [145.239.133.140:28015] [RU] Facepunch Hapis
+-> [51.38.148.45:25571] <OFFLINE>
+-> [213.161.99.140:28015] Rust Server
+-> [145.239.134.3:1611] <OFFLINE>
+-> [51.77.52.122:25578] <OFFLINE>
+-> [51.38.148.38:25573] <OFFLINE>
+-> [51.38.148.31:25586] <OFFLINE>
+-> [54.38.195.104:1607] <OFFLINE>
+-> [54.38.195.104:25585] <OFFLINE>
+-> [137.74.4.84:28015] SideGaming
+-> [51.77.52.123:25573] <OFFLINE>
+-> [51.77.53.114:25585] <OFFLINE>
+-> [54.36.175.75:25584] <OFFLINE>
+-> [51.83.214.131:28015] ! MultiRust | x2 Vanilla | SOLO/DUO | Full Wipe 16/01 | 2x Vani
+-> [145.239.134.3:25593] <OFFLINE>
+-> [51.38.147.22:28015] [EU/PL] Zamotani PVE |07.01|Raid|4500|Decay 30%|Vanilla|
+-> [51.77.52.123:25592] <OFFLINE>
 ...
 ```
