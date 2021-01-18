@@ -1,0 +1,10 @@
+[package]
+name = "rw-a2s"
+version = "0.1.0-debug"
+authors = ["FssAy <49795742+DmitrijVC@users.noreply.github.com>"]
+edition = "2018"
+
+
+[dependencies]
+thiserror = "1.0.23"
+lazy_static = "1.4.0"
