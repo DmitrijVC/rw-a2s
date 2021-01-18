@@ -1,4 +1,6 @@
-use crate::net::server::filters::{Regions, Filter};
+pub mod filters;
+
+use crate::net::client::filters::{Regions, Filter};
 use crate::errors::A2SClientError;
 use std::net::{UdpSocket, ToSocketAddrs};
 use std::sync::Mutex;
@@ -15,6 +17,16 @@ lazy_static! {
     };
 }
 
+
+pub enum MasterServers {
+    Source,
+} impl MasterServers {
+    pub fn get_host(&self) -> &str {
+        match *self {
+            MasterServers::Source => "hl2master.steampowered.com:27011",
+        }
+    }
+}
 
 pub struct Client {
     socket: UdpSocket,

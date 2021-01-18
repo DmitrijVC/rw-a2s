@@ -5,14 +5,14 @@ Debug branch is for testing purposes only!
 ## Issues
 - Regions different than ALL, are not working
 - Port should be u16 not u32
-- Info and MasterServers should be moved to client
+- ~~Info and MasterServers should be moved to client~~ *(fixed in v0.2.0-debug)*
 
-## Example of v0.1.0-debug
+## Example of v0.2.0-debug
 Code:
 ```rust
-use rw_a2s::net::server::{Server, MasterServers, Info};
-use rw_a2s::net::client::Client;
-use rw_a2s::net::server::filters::{Filter, FilterCode, Regions};
+use rw_a2s::net::server::{Server, Info};
+use rw_a2s::net::client::{Client, MasterServers};
+use rw_a2s::net::client::filters::{Filter, FilterCode, Regions};
 use rw_a2s::types::Bool;
 use rw_a2s::errors::ServerError;
 

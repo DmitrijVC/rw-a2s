@@ -1,8 +1,6 @@
 // Constructed for Rust-Game servers, without the challenge number
 // See https://developer.valvesoftware.com/wiki/Server_queries
 
-pub mod filters;
-
 use crate::errors::ServerError;
 use std::time::Duration;
 use std::net::{UdpSocket, SocketAddr};
@@ -10,16 +8,6 @@ use std::net::{UdpSocket, SocketAddr};
 const PREFIX_INFO_RESPONSE: [u8; 6] = [0xFF, 0xFF, 0xFF, 0xFF, 0x49, 0x11];
 const INFO_PACKET: [u8; 25] = [0xFF, 0xFF, 0xFF, 0xFF, 0x54, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x45, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x20, 0x51, 0x75, 0x65, 0x72, 0x79, 0x00];
 
-
-pub enum MasterServers {
-    Source,
-} impl MasterServers {
-    pub fn get_host(&self) -> &str {
-        match *self {
-            MasterServers::Source => "hl2master.steampowered.com:27011",
-        }
-    }
-}
 
 pub struct Server {
     ip: String,
