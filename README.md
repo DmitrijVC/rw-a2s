@@ -3,7 +3,7 @@ A2S lib for Rust-Wipe.com <br>
 Debug branch is for testing purposes only!
 
 ## Issues
-- Regions different than ALL, are not working
+- ~~Regions different than ALL, are not working~~ *(it fixed itself?)*
 - ~~Port should be u16 not u32~~ *(fixed in v0.2.1-debug)*
 - ~~Info and MasterServers should be moved to client~~ *(fixed in v0.2.0-debug)*
 
