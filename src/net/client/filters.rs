@@ -61,8 +61,8 @@ pub enum FilterCode{
             FilterCode::GameDir => TypeId::of::<&&str>(),
             FilterCode::Map => TypeId::of::<&&str>(),
             FilterCode::GameAddr => TypeId::of::<&&str>(),
-            FilterCode::AppId => TypeId::of::<&u16>(),
-            FilterCode::NoAppId => TypeId::of::<&u16>(),
+            FilterCode::AppId => TypeId::of::<&u32>(),
+            FilterCode::NoAppId => TypeId::of::<&u32>(),
         }
     }
 

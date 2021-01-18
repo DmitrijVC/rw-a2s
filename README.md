@@ -7,7 +7,7 @@ Debug branch is for testing purposes only!
 - ~~Port should be u16 not u32~~ *(fixed in v0.2.1-debug)*
 - ~~Info and MasterServers should be moved to client~~ *(fixed in v0.2.0-debug)*
 
-## Example of v0.2.1-debug
+## Example of v0.2.2-debug
 Code:
 ```rust
 use rw_a2s::net::server::{Server, Info};
