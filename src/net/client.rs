@@ -80,7 +80,7 @@ pub struct Client {
         payload
     }
 
-    fn parse2(host: &[u8]) -> (String, u32) {
+    fn parse2(host: &[u8]) -> (String, u16) {
         let pre = 0;
 
         let mut ip = String::new();
@@ -97,7 +97,7 @@ pub struct Client {
         }
         ip = ip.strip_suffix('.').unwrap().parse().unwrap();
 
-        let port = u32::from_str_radix(
+        let port = u16::from_str_radix(
             &*format!("{:X}{:X}", &host[pre+4], &host[pre+5]),
             16
         ).unwrap();
@@ -109,7 +109,7 @@ pub struct Client {
     // ToDo change the output
     // ToDo remove comments
     // ToDo add user defined timeout
-    pub fn get_servers<'a>(&self, region: Regions, filter: Filter, f: fn(String, u32)) -> bool {
+    pub fn get_servers<'a>(&self, region: Regions, filter: Filter, f: fn(String, u16)) -> bool {
         //                             const   region  0     .     0     .     0     .     0    :      0    \0   \0
         //         let payload = [MESSAGE_TYPE, 0xFF, 0x30, 0x2E, 0x30, 0x2E, 0x30, 0x2E, 0x30, 0x3A, 0x30, 00, 00_u8];
 

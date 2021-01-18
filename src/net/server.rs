@@ -11,12 +11,12 @@ const INFO_PACKET: [u8; 25] = [0xFF, 0xFF, 0xFF, 0xFF, 0x54, 0x53, 0x6F, 0x75, 0
 
 pub struct Server {
     ip: String,
-    port: u32,
+    port: u16,
     socket: UdpSocket,
 } impl Server {
 
     // ToDo fix checking if the host is offline
-    pub fn new(ip: String, port: u32) -> Result<Self, ServerError> {
+    pub fn new(ip: String, port: u16) -> Result<Self, ServerError> {
         let socket = match UdpSocket::bind("0.0.0.0:0") {
             Ok(result) => result,
             Err(error) => return Err(ServerError::IoError(error)),

@@ -4,7 +4,7 @@ Debug branch is for testing purposes only!
 
 ## Issues
 - Regions different than ALL, are not working
-- Port should be u16 not u32
+- ~~Port should be u16 not u32~~ *(fixed in v0.2.1-debug)*
 - ~~Info and MasterServers should be moved to client~~ *(fixed in v0.2.0-debug)*
 
 ## Example of v0.2.0-debug
@@ -16,7 +16,7 @@ use rw_a2s::net::client::filters::{Filter, FilterCode, Regions};
 use rw_a2s::types::Bool;
 use rw_a2s::errors::ServerError;
 
-fn get_server_info(ip: String, port: u32) -> Result<Info, ServerError> {
+fn get_server_info(ip: String, port: u16) -> Result<Info, ServerError> {
     let server = Server::new(ip, port)?;
     server.get_info()
 }
