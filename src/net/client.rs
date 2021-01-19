@@ -1,8 +1,9 @@
 pub mod filters;
 
+use crate::net::ToUdpSocket;
 use crate::net::client::filters::{Regions, Filter};
 use crate::errors::A2SClientError;
-use std::net::{UdpSocket, ToSocketAddrs};
+use std::net::{ToSocketAddrs};
 use std::sync::Mutex;
 use lazy_static;
 
@@ -28,24 +29,15 @@ pub enum MasterServers {
     }
 }
 
-pub struct Client {
-    pub socket: UdpSocket,
+pub struct Client<S: ToUdpSocket> {
+    pub socket: S,
     connected: bool,
-} impl Client {
-    pub fn new(socket: Option<UdpSocket>) -> Result<Self, A2SClientError> {
-        let sock = if socket.is_some() {
-            socket.unwrap()
-        } else {
-            match UdpSocket::bind("0.0.0.0:0") {
-                Ok(result) => result,
-                Err(error) => return Err(A2SClientError::IoError(error))
-            }
-        };
-
-        Ok (Self {
-            socket: sock,
+} impl<S: ToUdpSocket> Client<S> {
+    pub fn new(socket: S) -> Self {
+        Self {
+            socket,
             connected: false,
-        })
+        }
     }
 
     pub fn is_connected(&self) -> bool {
@@ -54,7 +46,7 @@ pub struct Client {
 
     pub fn connect_to_master<A: ToSocketAddrs>(&mut self, addr: A) -> Result<(), A2SClientError> {
         if !self.connected {
-            match self.socket.connect(addr) {
+            match self.socket.conn(addr) {
                 Ok(_) => self.connected = true,
                 Err(error) => return Err(A2SClientError::IoError(error)),
             };
@@ -123,12 +115,12 @@ pub struct Client {
             // println!("Sending packet with host: {:X?}", HOST.lock().unwrap());
             let packet = Self::build_packet(HOST.lock().unwrap().iter(), &region, &filter);
             // println!("Sending...");
-            self.socket.send(&packet).unwrap();
+            self.socket.send_packet(&packet).unwrap();
             // println!("SENT!");
 
             let mut buf = [0u8; 4096];
             // println!("Waiting for the response...");
-            let (size, response) = match self.socket.recv(&mut buf) {
+            let (size, response) = match self.socket.receive_packet(&mut buf) {
                 Ok(received) => {
                     println!("[MASTER SERVER] received {} bytes", received);
                     (received-6, &buf[6..received])
