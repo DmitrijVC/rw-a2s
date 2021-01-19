@@ -5,7 +5,7 @@ Debug branch is for testing purposes only!
 ## Issues
 - Regions different from ALL, are not working for some apps
 
-## Example of v0.4.0-debug
+## Example of v0.5.0-debug
 Code:
 ```rust
 use rw_a2s::*;
