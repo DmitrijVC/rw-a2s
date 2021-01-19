@@ -1,45 +1,35 @@
 // Constructed for Rust-Game servers, without the challenge number
 // See https://developer.valvesoftware.com/wiki/Server_queries
 
+use crate::net::ToUdpSocket;
 use crate::errors::ServerError;
-use std::time::Duration;
-use std::net::{UdpSocket, SocketAddr};
+use std::net::SocketAddr;
 
 const PREFIX_INFO_RESPONSE: [u8; 6] = [0xFF, 0xFF, 0xFF, 0xFF, 0x49, 0x11];
 const INFO_PACKET: [u8; 25] = [0xFF, 0xFF, 0xFF, 0xFF, 0x54, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x45, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x20, 0x51, 0x75, 0x65, 0x72, 0x79, 0x00];
 
 
-pub struct Server {
+pub struct Server<T: ToUdpSocket> {
     ip: String,
     port: u16,
-    socket: UdpSocket,
-} impl Server {
+    pub socket: T,
+} impl<T: ToUdpSocket> Server<T> {
 
     // ToDo fix checking if the host is offline
-    pub fn new(ip: String, port: u16, socket: Option<UdpSocket>) -> Result<Self, ServerError> {
-        let sock = if socket.is_some() {
-            socket.unwrap()
-        } else {
-            match UdpSocket::bind("0.0.0.0:0") {
-                Ok(result) => result,
-                Err(error) => return Err(ServerError::IoError(error)),
-            }
-        };
+    pub fn new(ip: String, port: u16, socket: T) -> Result<Self, ServerError> {
 
-
-        // ToDo check if Result returned Ok
-        let _ = sock.set_write_timeout(Some(
-            Duration::from_millis(1000)
-        ));
-
-        let _ = sock.set_read_timeout(Some(
-            Duration::from_millis(1000)
-        ));
+        // let _ = socket.set_write_timeout(Some(
+        //     Duration::from_millis(1000)
+        // ));
+        //
+        // let _ = socket.set_read_timeout(Some(
+        //     Duration::from_millis(1000)
+        // ));
 
         let mut server = Self {
             ip,
             port,
-            socket: sock,
+            socket,
         };
 
         return match server.connect() {
@@ -49,7 +39,7 @@ pub struct Server {
     }
 
     fn connect(&mut self) -> bool {
-        return match self.socket.connect(SocketAddr::new(
+        return match self.socket.conn(SocketAddr::new(
             self.ip.parse().unwrap(),
             self.port as u16
         ) ) {
@@ -59,10 +49,10 @@ pub struct Server {
     }
 
     pub fn get_info(&self) -> Result<Info, ServerError> {
-        self.socket.send(&INFO_PACKET).unwrap();
+        self.socket.send_packet(&INFO_PACKET).unwrap();
 
         let mut buf = [0; 4096];
-        let response = match self.socket.recv(&mut buf) {
+        let response = match self.socket.receive_packet(&mut buf) {
             Ok(result) => result,
             Err(_) => {
                 return Err(ServerError::TimedOut);
