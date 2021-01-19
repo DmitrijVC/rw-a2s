@@ -8,38 +8,24 @@ Debug branch is for testing purposes only!
 ## Example of v0.4.0-debug
 Code:
 ```rust
-#[macro_use] extern crate lazy_static;
-
-use rw_a2s::net::server::{ServerBS, Info};
-use rw_a2s::net::client::{ClientBS, MasterServers};
-use rw_a2s::net::client::filters::{Filter, FilterCode, Regions};
-use rw_a2s::types::Bool;
-use rw_a2s::errors::ServerError;
-use std::net::UdpSocket;
-use std::sync::Mutex;
-
-lazy_static!{
-    static ref SOCKET: UdpSocket = {
-        UdpSocket::bind("0.0.0.0:0").unwrap()
-    };
-}
+use rw_a2s::*;
 
 
 fn get_server_info(ip: String, port: u16) -> Result<Info, ServerError> {
-    let server = ServerBS::new(ip, port, &SOCKET)?;
-    server.get_info(&SOCKET)
+    let server = Server::new(ip, port, None)?;
+    server.get_info()
 }
 
 fn main() {
-    let mut client = ClientBS::new();
-    client.connect_to_master(MasterServers::Source.get_host(), &SOCKET).unwrap();
+    let mut client = Client::new(None).unwrap();
+    client.connect_to_master(MasterServers::Source.get_host());
 
-    let mut filters = Filter::new(None);
-    filters.add_unchecked(FilterCode::AppId, &252490_u32);
-    filters.add_unchecked(FilterCode::Secure, &Bool::FALSE);
-    filters.add_unchecked(FilterCode::Full, &Bool::TRUE);
+    let filters = Filter::new()
+        .add(FilterCode::AppId ( 252490 ))
+        .add(FilterCode::Secure ( Bool(false) ))
+        .add(FilterCode::Full( Bool(true) ));
 
-    client.get_servers(Regions::All, filters, &SOCKET, |ip, port| {
+    client.get_servers(Regions::All, filters, |ip, port| {
 
         let info = match get_server_info(ip.clone(), port) {
             Ok(result) => result,
