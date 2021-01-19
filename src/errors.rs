@@ -12,13 +12,6 @@ pub enum A2SClientError {
 
 
 #[derive(Error, Debug)]
-pub enum FilterError {
-    #[error("type of the value to set is not implemented")]
-    InvalidValueType,
-}
-
-
-#[derive(Error, Debug)]
 pub enum ServerError {
     #[error("io error has occurred")]
     IoError(std::io::Error),

@@ -74,59 +74,6 @@ pub struct Server {
     }
 }
 
-pub struct ServerBS {
-    ip: String,
-    port: u16,
-} impl ServerBS {
-
-    // ToDo fix checking if the host is offline
-    pub fn new(ip: String, port: u16, socket: &UdpSocket) -> Result<Self, ServerError> {
-
-        // ToDo check if Result returned Ok
-        let _ = socket.set_write_timeout(Some(
-            Duration::from_millis(1000)
-        ));
-
-        let _ = socket.set_read_timeout(Some(
-            Duration::from_millis(1000)
-        ));
-
-        let mut server = Self {
-            ip,
-            port,
-        };
-
-        return match server.connect(socket) {
-            true => Ok(server),
-            false => Err(ServerError::TimedOut)
-        }
-    }
-
-    fn connect(&mut self, socket: &UdpSocket) -> bool {
-        return match socket.connect(SocketAddr::new(
-            self.ip.parse().unwrap(),
-            self.port as u16
-        ) ) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
-    }
-
-    pub fn get_info(&self, socket: &UdpSocket) -> Result<Info, ServerError> {
-        socket.send(&INFO_PACKET).unwrap();
-
-        let mut buf = [0; 4096];
-        let response = match socket.recv(&mut buf) {
-            Ok(result) => result,
-            Err(_) => {
-                return Err(ServerError::TimedOut);
-            },
-        };
-
-        // println!("{}", String::from_utf8_lossy(&buf[..response]));
-        Info::new_from_raw(Data {raw: &buf[..response]}, self.ip.clone(), self.port as u16)
-    }
-}
 
 pub struct Data<'a> {
     raw: &'a [u8],

@@ -76,7 +76,7 @@ pub struct Client {
         where T: IntoIterator<Item=&'a u8> {
         let mut payload: Vec<u8> = Vec::new();
         payload.push(MESSAGE_TYPE);
-        payload.push(region.byte());
+        payload.push(*region as u8);
         Self::push_to_payload(&mut payload, host);
         payload.push(NULL_BYTE);
         Self::push_to_payload(&mut payload, filter.to_bytes().iter());
@@ -129,128 +129,6 @@ pub struct Client {
             let mut buf = [0u8; 4096];
             // println!("Waiting for the response...");
             let (size, response) = match self.socket.recv(&mut buf) {
-                Ok(received) => {
-                    println!("[MASTER SERVER] received {} bytes", received);
-                    (received-6, &buf[6..received])
-                },
-                Err(_) => {
-                    // println!("[MASTER SERVER] recv function failed: {:?}", e);
-                    break;
-                },
-            };
-
-            for x in 0..response.len()/6 {
-                let pre = x*6;
-                let (ip, port) = Self::parse2(&response[pre..pre+6]);
-
-                f(ip, port);
-            }
-
-            let (ip, port) = Self::parse2(&response[size-6..]);
-            let bytes = format!("{}:{}", ip, port).into_bytes();
-            if bytes.as_slice() != DEFAULT_HOST {
-                *HOST.lock().unwrap() = bytes
-            } else {
-                println!("[MASTER SERVER] End of the hosts list!");
-                break;
-            }
-
-            std::thread::sleep(std::time::Duration::from_millis(1000));
-        }
-        true
-    }
-}
-
-pub struct ClientBS {
-    connected: bool,
-} impl ClientBS {
-    pub fn new() -> Self {
-        Self {
-            connected: false,
-        }
-    }
-
-    pub fn is_connected(&self) -> bool {
-        self.connected
-    }
-
-    pub fn connect_to_master<A: ToSocketAddrs>(&mut self, addr: A, socket: &UdpSocket) -> Result<(), A2SClientError> {
-        if !self.connected {
-            match socket.connect(addr) {
-                Ok(_) => self.connected = true,
-                Err(error) => return Err(A2SClientError::IoError(error)),
-            };
-        } else {
-            return Err(A2SClientError::ToMasterConnectionRepeated)
-        }
-
-        Ok(())
-    }
-
-    fn push_to_payload<'a, T>(vec: &mut Vec<u8>, list: T)
-        where T: IntoIterator<Item=&'a u8> {
-        for b in list.into_iter(){
-            vec.push(*b)
-        }
-    }
-
-    fn build_packet<'a, T>(host: T, region: &Regions, filter: &Filter) -> Vec<u8>
-        where T: IntoIterator<Item=&'a u8> {
-        let mut payload: Vec<u8> = Vec::new();
-        payload.push(MESSAGE_TYPE);
-        payload.push(region.byte());
-        Self::push_to_payload(&mut payload, host);
-        payload.push(NULL_BYTE);
-        Self::push_to_payload(&mut payload, filter.to_bytes().iter());
-        payload.push(NULL_BYTE);
-        payload
-    }
-
-    fn parse2(host: &[u8]) -> (String, u16) {
-        let pre = 0;
-
-        let mut ip = String::new();
-        for x in &host[pre..pre+4] {
-            ip.push_str(&*(
-                u8::from_str_radix(
-                    &*format!("{:X}", *x),
-                    16
-                ).unwrap()
-            ).to_string()
-
-            );
-            ip.push('.');
-        }
-        ip = ip.strip_suffix('.').unwrap().parse().unwrap();
-
-        let port = u16::from_str_radix(
-            &*format!("{:X}{:X}", &host[pre+4], &host[pre+5]),
-            16
-        ).unwrap();
-
-        return (ip, port)
-    }
-
-    // Unfinished function [debug]
-    // ToDo change the output
-    // ToDo remove comments
-    // ToDo add user defined timeout
-    pub fn get_servers<'a>(&self, region: Regions, filter: Filter, socket: &UdpSocket, f: fn(String, u16)) -> bool {
-        //                             const   region  0     .     0     .     0     .     0    :      0    \0   \0
-        //         let payload = [MESSAGE_TYPE, 0xFF, 0x30, 0x2E, 0x30, 0x2E, 0x30, 0x2E, 0x30, 0x3A, 0x30, 00, 00_u8];
-
-        *HOST.lock().unwrap() = DEFAULT_HOST.to_vec();
-        loop {
-
-            // println!("Sending packet with host: {:X?}", HOST.lock().unwrap());
-            let packet = Self::build_packet(HOST.lock().unwrap().iter(), &region, &filter);
-            // println!("Sending...");
-            socket.send(&packet).unwrap();
-            // println!("SENT!");
-
-            let mut buf = [0u8; 4096];
-            // println!("Waiting for the response...");
-            let (size, response) = match socket.recv(&mut buf) {
                 Ok(received) => {
                     println!("[MASTER SERVER] received {} bytes", received);
                     (received-6, &buf[6..received])
