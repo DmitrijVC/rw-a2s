@@ -31,12 +31,12 @@ pub struct Server<T: ToUdpSocket> {
     }
 
     pub fn set_write_timeout(self, dur: Duration) -> Self {
-        self.socket.write_timeout(some(dur));
+        let _ = self.socket.write_timeout(Some(dur));
         self
     }
 
     pub fn set_read_timeout(self, dur: Duration) -> Self {
-        self.socket.read_timeout(some(dur));
+        let _ = self.socket.read_timeout(Some(dur));
         self
     }
 
