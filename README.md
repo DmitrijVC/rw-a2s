@@ -4,6 +4,7 @@ Debug branch is for testing purposes only!
 
 ## Issues
 - Regions different from ALL, are not working for some apps
+- Client::get_servers returns the same servers multiple times 
 
 ## Example of v0.5.4-debug
 Code:
