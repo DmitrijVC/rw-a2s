@@ -4,6 +4,7 @@
 use crate::net::ToUdpSocket;
 use crate::errors::ServerError;
 use std::net::SocketAddr;
+use std::time::Duration;
 
 const PREFIX_INFO_RESPONSE: [u8; 6] = [0xFF, 0xFF, 0xFF, 0xFF, 0x49, 0x11];
 const INFO_PACKET: [u8; 25] = [0xFF, 0xFF, 0xFF, 0xFF, 0x54, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x45, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x20, 0x51, 0x75, 0x65, 0x72, 0x79, 0x00];
@@ -17,15 +18,6 @@ pub struct Server<T: ToUdpSocket> {
 
     // ToDo fix checking if the host is offline
     pub fn new(ip: String, port: u16, socket: T) -> Result<Self, ServerError> {
-
-        // let _ = socket.set_write_timeout(Some(
-        //     Duration::from_millis(1000)
-        // ));
-        //
-        // let _ = socket.set_read_timeout(Some(
-        //     Duration::from_millis(1000)
-        // ));
-
         let mut server = Self {
             ip,
             port,
@@ -36,6 +28,16 @@ pub struct Server<T: ToUdpSocket> {
             true => Ok(server),
             false => Err(ServerError::TimedOut)
         }
+    }
+
+    pub fn set_write_timeout(self, dur: Duration) -> Self {
+        self.socket.write_timeout(some(dur));
+        self
+    }
+
+    pub fn set_read_timeout(self, dur: Duration) -> Self {
+        self.socket.read_timeout(some(dur));
+        self
     }
 
     fn connect(&mut self) -> bool {

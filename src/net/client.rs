@@ -6,6 +6,7 @@ use crate::errors::A2SClientError;
 use std::net::{ToSocketAddrs};
 use std::sync::Mutex;
 use lazy_static;
+use std::time::Duration;
 
 const MESSAGE_TYPE: u8 = 0x31;
 const DEFAULT_HOST: [u8; 9] = [0x30, 0x2E, 0x30, 0x2E, 0x30, 0x2E, 0x30, 0x3A, 0x30];
@@ -38,6 +39,16 @@ pub struct Client<S: ToUdpSocket> {
             socket,
             connected: false,
         }
+    }
+
+    pub fn set_write_timeout(self, dur: Duration) -> Self {
+        self.socket.write_timeout(some(dur));
+        self
+    }
+
+    pub fn set_read_timeout(self, dur: Duration) -> Self {
+        self.socket.read_timeout(some(dur));
+        self
     }
 
     pub fn is_connected(&self) -> bool {

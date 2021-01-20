@@ -1,6 +1,6 @@
 [package]
 name = "rw-a2s"
-version = "0.5.2-debug"
+version = "0.5.3-debug"
 authors = ["FssAy <49795742+DmitrijVC@users.noreply.github.com>"]
 edition = "2018"
 
