@@ -15,24 +15,24 @@ use std::net::UdpSocket;
 use std::time::Duration;
 
 lazy_static!{
-    static ref SERVER_SOCKET: UdpSocket = {
+    static ref SERVERS_SOCKET: UdpSocket = {
         let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
-        socket.set_read_timeout(Some(Duration::from_millis(300))).unwrap();
-        socket.set_write_timeout(Some(Duration::from_millis(300))).unwrap();
+        socket.set_read_timeout(Some(Duration::from_millis(100))).unwrap();
+        socket.set_write_timeout(Some(Duration::from_millis(100))).unwrap();
         socket
     };
 }
 
 
 fn get_server_info(ip: String, port: u16) -> Result<Info, ServerError> {
-    let server = Server::new(ip, port, &*SERVER_SOCKET)?;
-    server.get_info()
+    let game_server = Server::new(ip, port, &*SERVERS_SOCKET)?;
+    game_server.get_info()
 }
 
 fn main() {
     let mut client = Client::new(UdpSocket::bind("0.0.0.0:0").unwrap())
-        .set_write_timeout(Duration::from_millis(300))
-        .set_read_timeout(Duration::from_millis(300));
+        .set_write_timeout(Duration::from_millis(1000))
+        .set_read_timeout(Duration::from_millis(1000));
 
     let filters = Filter::new()
         .add(FilterCode::AppId(252490));
