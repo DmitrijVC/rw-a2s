@@ -4,7 +4,8 @@ Debug branch is for testing purposes only!
 
 ## Issues
 - Regions different from ALL, are not working for some apps
-- Client::get_servers returns the same servers after 5 packets
+- ~~Client::get_servers returns the same servers after 5 packets~~ *(fixed in v0.5.5-debug ?)*
+
 
 ## Example of v0.5.4-debug
 Code:

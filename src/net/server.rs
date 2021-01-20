@@ -83,33 +83,33 @@ pub struct Info {
     pub players_now: String,
 } impl Info {
     fn read_string(start: usize, data: &Data) -> String {
-        let mut string = String::new();
+        let mut bytes: Vec<u8> = Vec::new();
         for b in &data.raw[start..] {
             if b != &0x00 {
-                string.push(
-                    char::from(*b)
+                bytes.push(
+                    *b
                 );
             } else {
                 break;
             }
         }
 
-        string
+        String::from_utf8_lossy(&bytes).replace("", "")
     }
 
     fn read_string_owned(start: usize, data: Data) -> String {
-        let mut string = String::new();
+        let mut bytes: Vec<u8> = Vec::new();
         for b in &data.raw[start..] {
             if b != &0x00 {
-                string.push(
-                    char::from(*b)
+                bytes.push(
+                    *b
                 );
             } else {
                 break;
             }
         }
 
-        string
+        String::from_utf8_lossy(&bytes).replace("", "")
     }
 
     pub fn new_from_raw(data: Data, ip: String, port: u16) -> Result<Self, ServerError>{

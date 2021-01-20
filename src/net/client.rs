@@ -142,7 +142,7 @@ pub struct Client<S: ToUdpSocket> {
                 },
             };
 
-            for x in 0..response.len()/6 {
+            for x in 0..(response.len()/6)-6 {
                 let pre = x*6;
                 let (ip, port) = Self::parse2(&response[pre..pre+6]);
 
