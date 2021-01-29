@@ -116,7 +116,7 @@ pub struct Client<S: ToUdpSocket> {
     // ToDo change the output
     // ToDo remove comments
     // ToDo add user defined timeout
-    pub fn get_servers<'a>(&self, region: Regions, filter: Filter, f: fn(String, u16)) -> bool {
+    pub fn get_servers<'a>(&self, region: Regions, filter: Filter, mut f: impl FnMut(String, u16)) -> bool {
         //                             const   region  0     .     0     .     0     .     0    :      0    \0   \0
         //         let payload = [MESSAGE_TYPE, 0xFF, 0x30, 0x2E, 0x30, 0x2E, 0x30, 0x2E, 0x30, 0x3A, 0x30, 00, 00_u8];
 
