@@ -8,6 +8,7 @@
 mod net;
 mod errors;
 mod types;
+pub mod utils;
 
 #[allow(unused_imports)]
 pub use crate::net::server::*;
