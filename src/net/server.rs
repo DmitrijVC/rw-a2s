@@ -5,9 +5,16 @@ use crate::net::ToUdpSocket;
 use crate::errors::ServerError;
 use std::net::SocketAddr;
 use std::time::Duration;
+use std::cell::Cell;
 
 const PREFIX_INFO_RESPONSE: [u8; 6] = [0xFF, 0xFF, 0xFF, 0xFF, 0x49, 0x11];
 const INFO_PACKET: [u8; 25] = [0xFF, 0xFF, 0xFF, 0xFF, 0x54, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x45, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x20, 0x51, 0x75, 0x65, 0x72, 0x79, 0x00];
+
+
+fn read_string(start: usize, data: &Vec<u8>) -> String {
+    let d = &data[start..];
+    String::from_utf8_lossy(&d[..d.iter().position(|&x| x == 0).unwrap() as usize]).to_string()
+}
 
 
 pub struct Server<T: ToUdpSocket> {
@@ -62,13 +69,46 @@ pub struct Server<T: ToUdpSocket> {
         };
 
         // println!("{}", String::from_utf8_lossy(&buf[..response]));
-        Info::new_from_raw(Data {raw: &buf[..response]}, self.ip.clone(), self.port as u16)
+        Info::new_from_raw(buf[..response].to_vec(), self.ip.clone(), self.port as u16)
     }
 }
 
+#[derive(Debug)]
+pub enum ServerType {
+    Dedicated,
+    NonDedicated,
+    SourceTV,
+    Unknown
+}
 
-pub struct Data<'a> {
-    raw: &'a [u8],
+impl From<u8> for ServerType {
+    fn from(v: u8) -> Self {
+        match v as char {
+            'd' => ServerType::Dedicated,
+            'l' => ServerType::NonDedicated,
+            'p' => ServerType::SourceTV,
+            _ => ServerType::Unknown
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum ServerEnvironment {
+    Linux,
+    Windows,
+    Mac,
+    Unknown
+}
+
+impl From<u8> for ServerEnvironment {
+    fn from(v: u8) -> Self {
+        match v as char {
+            'l' => ServerEnvironment::Linux,
+            'w' => ServerEnvironment::Windows,
+            'm' | 'o' => ServerEnvironment::Mac,
+            _ => ServerEnvironment::Unknown
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -76,89 +116,133 @@ pub struct Info {
     pub ip: String,
     pub port: u16,
     pub name: String,
-    pub map_name: String,
-    pub wipe_stamp: String,
-    pub fps: String,
-    pub players_max: String,
-    pub players_now: String,
-} impl Info {
-    fn read_string(start: usize, data: &Data) -> String {
-        let mut bytes: Vec<u8> = Vec::new();
-        for b in &data.raw[start..] {
-            if b != &0x00 {
-                bytes.push(
-                    *b
-                );
-            } else {
-                break;
-            }
-        }
+    pub map: String,
+    pub folder: String,
+    pub game: String,
+    pub appid: u16,
+    pub players: u8,
+    pub max_players: u8,
+    pub bots: u8,
+    pub server_type: ServerType,
+    pub environment: ServerEnvironment,
+    pub visibility: bool, // false if private
+    pub vac: bool,
+    pub version: String,
+    pub extra_data: EDF
+}
 
-        String::from_utf8_lossy(&bytes).replace("", "")
-    }
+impl Info {
+    pub fn new_from_raw(data: Vec<u8>, ip: String, port: u16) -> Result<Self, ServerError>{
+        if data.starts_with(&PREFIX_INFO_RESPONSE) {
+            let data_pointer = Cell::new(PREFIX_INFO_RESPONSE.len());
 
-    fn read_string_owned(start: usize, data: Data) -> String {
-        let mut bytes: Vec<u8> = Vec::new();
-        for b in &data.raw[start..] {
-            if b != &0x00 {
-                bytes.push(
-                    *b
-                );
-            } else {
-                break;
-            }
-        }
+            let read_string = || {
+                let d = read_string(data_pointer.get(), &data);
+                data_pointer.set(data_pointer.get() + d.len() + 1);
+                d
+            };
 
-        String::from_utf8_lossy(&bytes).replace("", "")
-    }
+            let read_short = || {
+                let d = u16::from_le_bytes([data[data_pointer.get()], data[data_pointer.get() + 1]]);
+                data_pointer.set(data_pointer.get() + 2);
+                d
+            };
 
-    pub fn new_from_raw(data: Data, ip: String, port: u16) -> Result<Self, ServerError>{
-        return if data.raw.starts_with(&PREFIX_INFO_RESPONSE) {
-            let name = Self::read_string(PREFIX_INFO_RESPONSE.len(), &data);
-            let map_name = Self::read_string(PREFIX_INFO_RESPONSE.len() + name.len() + 1, &data);
+            let read_byte = || {
+                let d = data[data_pointer.get()];
+                data_pointer.set(data_pointer.get() + 1);
+                d
+            };
 
-            let mut extra_fields_i = 0;
-            let start = PREFIX_INFO_RESPONSE.len() + name.len() + 1 + map_name.len() + 1;
-            for i in start..data.raw.len() - 1 {
-                if &data.raw[i] == &0x3F {
-                    if &data.raw[i + 1] == &0x40 && &data.raw[i + 2] == &0x01 {
-                        extra_fields_i = i + 3;
-                        break;
-                    }
-                }
-            }
-
-            let mut extra_fields: Vec<String> = Vec::new();
-            for x in Self::read_string_owned(extra_fields_i, data).split(",") {
-                extra_fields.push(x.to_string())
-            }
-
-            // ToDo implement players_max and players_now
-            let mut wipe_stamp = String::from("NaN");
-            let mut fps = String::from("NaN");
-            let players_max = String::from("NaN");  // unimplemented
-            let players_now = String::from("NaN");  // unimplemented
-
-            for field in extra_fields.iter() {
-                if field.starts_with("born") {
-                    wipe_stamp = field.replace("born", "");
-                } else if field.starts_with("fps_avg") {
-                    fps = field.replace("fps_avg", "");
-                }
-            }
+            let read_server_type = || {
+                let t = ServerType::from(data[data_pointer.get()]);
+                data_pointer.set(data_pointer.get() + 1);
+                t
+            };
+            let read_environment = ||{
+                let e = ServerEnvironment::from(data[data_pointer.get()]);
+                data_pointer.set(data_pointer.get() + 1);
+                e
+            };
 
             Ok(Self {
                 ip,
                 port,
-                name,
-                map_name,
-                wipe_stamp,
-                fps,
-                players_max,
-                players_now,
+                name: read_string(),
+                map: read_string(),
+                folder: read_string(),
+                game: read_string(),
+                appid: read_short(),
+                players: read_byte(),
+                max_players: read_byte(),
+                bots: read_byte(),
+                server_type: read_server_type(),
+                environment: read_environment(),
+                visibility: read_byte() == 0,
+                vac: read_byte() != 0,
+                version: read_string(),
+                extra_data: EDF::from(&data[data_pointer.get()..])
             })
         } else {
             Err(ServerError::InvalidResponsePrefix)
+        }
+    }
+}
+
+
+#[derive(Debug)]
+pub struct EDF {
+    pub port: Option<u16>,
+    pub steam_id: Option<u64>,
+    pub source_tv_port: Option<u16>,
+    pub source_tv_name: Option<String>,
+    pub tags: Option<String>,
+    pub game_id: Option<u64>
+}
+
+impl From<&[u8]> for EDF {
+    fn from(data: &[u8]) -> Self {
+        let flags = data[0];
+        
+        let mut dp = 1_usize;
+
+        let port = if flags&0x80 != 0 {
+            let t = u16::from_le_bytes([data[1], data[2]]);
+            dp += 2;
+            Some(t)
+        } else { None };
+
+        let steam_id = if flags&0x10 != 0 {
+            let t = u64::from_le_bytes([data[dp], data[dp+1], data[dp+2], data[dp+3], data[dp+4], data[dp+5], data[dp+6], data[dp+7]]);
+            dp += 8;
+            Some(t)
+        } else { None };
+
+        let (source_tv_port, source_tv_name) = if flags&0x40 != 0 {
+            let port = u16::from_le_bytes([data[dp], data[dp+1]]);
+            let name = read_string(dp+2, &data.to_vec());
+            dp += 3 + name.len();
+            (Some(port), Some(name))
+        } else { (None, None) };
+
+        let tags = if flags&0x20 != 0 {
+            let t = read_string(dp, &data.to_vec());
+            dp += t.len() + 1;
+            Some(t)
+        } else { None };
+
+        
+        let game_id = if flags&0x01 != 0 {
+            Some(u64::from_le_bytes([data[dp], data[dp+1], data[dp+2], data[dp+3], data[dp+4], data[dp+5], data[dp+6], data[dp+7]]))
+        } else { None };
+
+        Self {
+            port,
+            steam_id,
+            source_tv_port,
+            source_tv_name,
+            tags,
+            game_id
         }
     }
 }
